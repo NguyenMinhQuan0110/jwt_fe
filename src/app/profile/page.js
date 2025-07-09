@@ -1,7 +1,8 @@
 'use client';
 
 import Header from '@/components/Header';
-import { useState } from 'react';
+import api from '@/utils/api';
+import { useEffect, useState } from 'react';
 
 export default function EditUserPage() {
   const [name, setName] = useState('');
@@ -13,6 +14,24 @@ export default function EditUserPage() {
   const [passwordError, setPasswordError] = useState('');
   const [infoSuccess, setInfoSuccess] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [userId, setUserId]=useState('');
+
+  // Lấy thông tin người dùng khi component được mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get('/auth/getuserbytoken');
+        const { id, name, email } = response.data;
+        setUserId(id);
+        setName(name);
+        setEmail(email);
+      } catch (err) {
+        setInfoError('Không thể tải thông tin người dùng. Vui lòng thử lại.');
+        console.log(err);
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const handleInfoSubmit = async (e) => {
     e.preventDefault();
@@ -24,12 +43,19 @@ export default function EditUserPage() {
       return;
     }
 
-    // Giả lập gọi API cập nhật thông tin
     try {
-      // const response = await api.put('/auth/update-profile', { name, email });
+      const response = await api.put('/users/userupdate', {
+        id: userId,
+        name,
+        email,
+      });
       setInfoSuccess('Cập nhật thông tin thành công!');
+      // Cập nhật lại state với dữ liệu mới
+      setName(response.data.name);
+      setEmail(response.data.email);
     } catch (err) {
-      setInfoError('Cập nhật thông tin thất bại. Vui lòng thử lại.');
+      const errorMessage = err.response?.data?.message || 'Cập nhật thông tin thất bại. Vui lòng thử lại.';
+      setInfoError(errorMessage);
     }
   };
 
@@ -48,12 +74,20 @@ export default function EditUserPage() {
       return;
     }
 
-    // Giả lập gọi API đổi mật khẩu
     try {
-      // const response = await api.put('/auth/change-password', { currentPassword, newPassword });
-      setPasswordSuccess('Đổi mật khẩu thành công!');
+      const response = await api.put('/users/setpassword', {
+        id: userId,
+        oldpassword: currentPassword,
+        newpassword: newPassword,
+      });
+      setPasswordSuccess(response.data.message || 'Đổi mật khẩu thành công!');
+      // Xóa các trường mật khẩu sau khi đổi thành công
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
     } catch (err) {
-      setPasswordError('Đổi mật khẩu thất bại. Vui lòng thử lại.');
+      const errorMessage = err.response?.data?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.';
+      setPasswordError(errorMessage);
     }
   };
 

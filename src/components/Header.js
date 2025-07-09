@@ -52,9 +52,9 @@ export default function Header() {
 
   // Toggle dropdown menu
   const toggleDropdown = () => {
-      setShowDropdown(!showDropdown);
-    };
-    useEffect(() => {
+    setShowDropdown(!showDropdown);
+  };
+  useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);

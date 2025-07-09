@@ -25,46 +25,38 @@ export default function Sidebar() {
     fetchUser();
   }, []);
 
-  // Xử lý đăng xuất
-    const handleLogout = async () => {
-      try {
-        await api.post('/auth/logout');
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        setIsLoggedIn(false);
-        setUser(null);
-        setIsAdmin(false);
-        window.location.href = '/';
-      } catch (err) {
-        console.error('Lỗi khi đăng xuất:', err);
-      }
-    };
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Lỗi khi đăng xuất:', err);
+    }
+  };
 
-  // Toggle dropdown menu
   const toggleDropdown = () => {
-      setShowDropdown(!showDropdown);
-    };
-    useEffect(() => {
+    setShowDropdown(!showDropdown);
+  };
+
+  useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
     }
 
-    if (showDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showDropdown]);
+  }, []);
 
   return (
-    <div className="w-64 bg-gray-800 text-white h-screen p-4 fixed top-0 left-0 overflow-y-auto">
-      <div>
+    <div className="w-64 bg-gray-800 text-white h-screen fixed top-0 left-0 flex flex-col justify-between">
+      {/* Nội dung menu: cuộn được */}
+      <div className="p-4 overflow-y-auto flex-1">
         <h2 className="text-xl font-bold mb-6">Admin Dashboard</h2>
         <nav className="space-y-2">
           <a href="/admin" className="block p-2 rounded-md hover:bg-gray-700">Tổng quan</a>
@@ -74,11 +66,14 @@ export default function Sidebar() {
           <a href="/" className="block p-2 rounded-md hover:bg-gray-700">Quay lại trang chủ</a>
         </nav>
       </div>
-      
-      {/* Thông tin người dùng ở dưới cùng */}
+
+      {/* Avatar + tên cố định dưới cùng */}
       {user && (
-        <div className="mt-6 pt-4 border-t border-gray-600 flex items-center space-x-3" ref={dropdownRef}>
-          <button onClick={toggleDropdown} className="flex items-center space-x-3 w-full text-left focus:outline-none">
+        <div className="p-4 border-t border-gray-700 relative" ref={dropdownRef}>
+          <button
+            onClick={toggleDropdown}
+            className="flex items-center space-x-3 w-full text-left focus:outline-none"
+          >
             <Image
               src={user?.avatar || '/default-avatar.png'}
               alt="Avatar"
@@ -86,26 +81,20 @@ export default function Sidebar() {
               height={40}
               className="rounded-full object-cover"
             />
-            <div>
-              <p className="text-sm font-medium">{user?.name}</p>
-            </div>
+            <span className="text-sm font-medium">{user.name}</span>
           </button>
+
           {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white text-gray-700 border border-gray-300 rounded-md shadow-lg z-10">
-                  <a
-                    href="/profile"
-                    className="block px-4 py-2 hover:bg-blue-100"
-                  >
-                    Cài đặt
-                  </a>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 hover:bg-blue-100"
-                  >
-                    Đăng xuất
-                  </button>
-                </div>
-              )}
+            <div className="absolute bottom-14 left-4 w-48 bg-white text-gray-800 border border-gray-300 rounded-md shadow-lg z-50">
+              <a href="/profile" className="block px-4 py-2 hover:bg-gray-100">Cài đặt</a>
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Đăng xuất
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

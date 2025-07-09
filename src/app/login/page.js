@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +32,11 @@ export default function LoginPage() {
       const errorMessage = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
       setError(errorMessage);
     }
+  };
+
+  //xử lý ẩn hiện mật khẩu
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -58,19 +64,30 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Mật khẩu
             </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`mt-1 w-full p-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-              placeholder="Nhập mật khẩu"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`mt-1 w-full p-2 pr-10 border ${error ? 'border-red-500' : 'border-gray-300'
+                  } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                placeholder="Nhập mật khẩu"
+                required
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xl text-gray-500 hover:text-gray-800"
+                tabIndex={-1}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
             <div className="text-right mt-2"> {/* Thêm div bao bọc và căn trái */}
-                <a href="/forgetpassword" className="text-blue-600 hover:underline">
+              <a href="/forgetpassword" className="text-blue-600 hover:underline">
                 Quên mật khẩu
-                </a>
+              </a>
             </div>
           </div>
           <button

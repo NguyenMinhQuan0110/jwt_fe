@@ -1,19 +1,37 @@
 'use client';
 
+import api from '@/utils/api';
 import Sidebar from '../../../components/Sidebar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-// Mock data cho người dùng
-const mockUsers = [
-  { id: 1, name: 'Nguyễn Văn A', email: 'a@example.com', role: 'User' },
-  { id: 2, name: 'Trần Thị B', email: 'b@example.com', role: 'Admin' },
-  { id: 3, name: 'Lê Văn C', email: 'c@example.com', role: 'User' },
-];
+
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
 
-  const handleDelete = (id) => {
+
+  //xử lý lấy danh sách user
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get('/users');
+        setUsers(response.data);
+      } catch (err) {
+        setError('Không thể tải danh sách người dùng. Vui lòng thử lại.');
+        console.log(err);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const handleDelete = async(id) => {
+    try {
+      await api.delete(`/users/${id}`);
+    } catch (err) {
+      setError('Không thể Xóa người dùng người dùng. Vui lòng thử lại.');
+      console.log(err);
+    }
     setUsers(users.filter((user) => user.id !== id));
   };
 
@@ -28,6 +46,13 @@ export default function UserManagement() {
         >
           Thêm người dùng
         </a>
+
+        {error && (
+          <div className="text-red-600 mb-4">
+            {error}
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-md">
           <table className="w-full">
             <thead>
@@ -35,6 +60,7 @@ export default function UserManagement() {
                 <th className="p-3 text-left">Tên</th>
                 <th className="p-3 text-left">Email</th>
                 <th className="p-3 text-left">Vai trò</th>
+                <th className="p-3 text-left">Block</th>
                 <th className="p-3 text-left">Hành động</th>
               </tr>
             </thead>
@@ -44,6 +70,7 @@ export default function UserManagement() {
                   <td className="p-3">{user.name}</td>
                   <td className="p-3">{user.email}</td>
                   <td className="p-3">{user.role}</td>
+                  <td className="p-3">{user.block ? "Có" : "Không"}</td>
                   <td className="p-3">
                     <a href={`/admin/users/manage/${user.id}`} className="text-blue-600 hover:underline mr-4">
                       Quản lý
