@@ -143,7 +143,7 @@ export default function ManageUser() {
           {error && <div className="text-red-600 mb-4">{error}</div>}
           <p className="mb-2"><strong>Tên:</strong> {user.name}</p>
           <p className="mb-2"><strong>Email:</strong> {user.email}</p>
-          <p className="mb-4"><strong>Trạng thái:</strong> {status ? 'unblock' : 'block'}</p>
+          <p className="mb-4"><strong>Trạng thái:</strong> {status ? ('unblock') : (<> block - <strong>Lý do:</strong> {user.reason}</>)} </p>
           <p className="mb-4"><strong>Vai trò hiện tại:</strong> {selectedRole}</p>
           <div className="flex space-x-4">
             <div className="relative" ref={dropdownRef}>

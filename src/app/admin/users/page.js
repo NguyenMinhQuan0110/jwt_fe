@@ -2,13 +2,18 @@
 
 import api from '@/utils/api';
 import Sidebar from '../../../components/Sidebar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const modalRef = useRef(null);
 
 
   //xử lý lấy danh sách user
@@ -24,16 +29,73 @@ export default function UserManagement() {
     };
     fetchUserData();
   }, []);
+// Cập nhật mối khi searchTerm  thay đổi
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (searchTerm.trim() !== '') {
+        searchUsers(searchTerm);
+      } else {
+        // Nếu không có từ khóa thì load tất cả
+        api.get('/users')
+          .then(res => setUsers(res.data))
+          .catch(err => {
+            console.error(err);
+            setError('Không thể tải danh sách người dùng.');
+          });
+      }
+    }, 500); // 0.5 giây debounce
 
-  const handleDelete = async(id) => {
-    try {
-      await api.delete(`/users/${id}`);
-    } catch (err) {
-      setError('Không thể Xóa người dùng người dùng. Vui lòng thử lại.');
-      console.log(err);
-    }
-    setUsers(users.filter((user) => user.id !== id));
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
+
+  // Mở modal xác nhận xóa
+  const handleAskDelete = (user) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
   };
+
+  //gọi api xác nhận xóa
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/users/delete/${userToDelete.id}`);
+      setSuccess(`Xóa thành công người dùng: ${userToDelete.name}`)
+      setUsers(users.filter((user) => user.id !== userToDelete.id));
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Không thể Xóa người dùng người dùng. Vui lòng thử lại.';
+      setError(errorMessage);
+    } finally {
+      // Sau khi xử lý xong mới reset modal
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+
+  //gọi api xử lý tìm kiếm user
+  const searchUsers = async (keyword) => {
+    try {
+      const response = await api.get(`/users/search`, {
+        params: { keyword }
+      });
+      setUsers(response.data);
+      setError('');
+    } catch (err) {
+      console.error('Lỗi khi tìm kiếm:', err);
+      setError('Không thể tìm kiếm. Vui lòng thử lại.');
+    }
+  };
+
+  // Click outside để đóng modal
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isDeleteModalOpen && modalRef.current && !modalRef.current.contains(e.target)) {
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDeleteModalOpen]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -46,10 +108,25 @@ export default function UserManagement() {
         >
           Thêm người dùng
         </a>
+        <div className="mb-4">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Nhập tên, email, hoặc id của user..."
+            className="w-full md:w-1/2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
         {error && (
           <div className="text-red-600 mb-4">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="text-green-600 mb-4">
+            {success}
           </div>
         )}
 
@@ -76,7 +153,7 @@ export default function UserManagement() {
                       Quản lý
                     </a>
                     <button
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => handleAskDelete(user)}
                       className="text-red-600 hover:underline"
                     >
                       Xóa
@@ -88,6 +165,37 @@ export default function UserManagement() {
           </table>
         </div>
       </div>
+      {/* Modal xác nhận xóa */}
+      {isDeleteModalOpen && userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div
+            ref={modalRef}
+            className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
+          >
+            <h3 className="text-lg font-semibold mb-4">Xác nhận xóa</h3>
+            <p className="mb-6">
+              Bạn có chắc chắn muốn xóa người dùng: <strong>{userToDelete.name}</strong> không?
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setUserToDelete(null);
+                }}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

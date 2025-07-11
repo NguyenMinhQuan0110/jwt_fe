@@ -1,5 +1,6 @@
 'use client';
 
+import api from '@/utils/api';
 import Sidebar from '../../../../components/Sidebar';
 import { useState } from 'react';
 
@@ -7,12 +8,24 @@ export default function AddUser() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('User');
+  const [role, setRole] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Logic thêm người dùng sẽ được thêm sau khi kết nối backend
-    console.log('New User:', { name, email, password, role });
+    setError('');
+    setSuccess('');
+
+    try {
+      await api.post('/users/admincreate', { name, email, password, role });
+
+      setSuccess('Tạo mới user thành công!');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Tạo mới user thất bại. Vui lòng thử lại.';
+      console.log(err)
+      setError(errorMessage);
+    }
   };
 
   return (
@@ -20,11 +33,13 @@ export default function AddUser() {
       <Sidebar />
       <div className="flex-1 p-8 ml-64">
         <h2 className="text-2xl font-bold mb-6">Thêm người dùng</h2>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
         <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl">
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Họ và tên
+                Tên đăng nhập
               </label>
               <input
                 type="text"
@@ -32,7 +47,7 @@ export default function AddUser() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập họ và tên"
+                placeholder="Nhập tên đăng nhập"
                 required
               />
             </div>
@@ -74,6 +89,7 @@ export default function AddUser() {
                 onChange={(e) => setRole(e.target.value)}
                 className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
+                <option value="">-- Chọn vai trò --</option>
                 <option value="User">User</option>
                 <option value="Admin">Admin</option>
               </select>
